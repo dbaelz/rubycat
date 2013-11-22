@@ -14,18 +14,24 @@ loglevel = {"V/" => {:name => "VERBOSE", :color => "white"},
             "S/" => {:name => "SILENT", :color => "cyan"}}
 
 begin
-  IO.popen("adb logcat") do |log|
+  IO.popen("adb logcat -v long") do |log|
+    color = "white"
     while line = log.gets
 
-      loglevel.each_pair do |key, value| 
-        if line.start_with?(key)
-          prio = (value[:name]).bold.inverse
-          color = value[:color]
-          output = "#{prio}\t#{line[2..-1]}".send(color)
+      if line.start_with?("[")
+        loglevel.each_pair do |key, value| 
+          if line.include?(key)
+            prio = (value[:name]).bold.inverse
+            color = value[:color]            
+            header = "#{prio}\t#{line}".send(color)
 
-          value.has_key?(:format) ? (puts output.send(value[:format])) : (puts output)
+            value.has_key?(:format) ? (puts header.send(value[:format])) : (puts header)
+          end
         end
-      end
+      else
+        output = "\t#{line}".send(color)
+        puts output
+      end      
     end  
   end
 rescue Interrupt
